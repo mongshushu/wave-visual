@@ -1,20 +1,22 @@
 <!DOCTYPE html>
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wave Visual</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: black;
-    }
-    canvas {
-      display: block;
-    }
-  </style>
-</head>
-
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wave Event – 2420×1668</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: black;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
     <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
     <script>
       const WIDTH = 2420;
@@ -30,15 +32,15 @@
 
       const geometry = new THREE.PlaneGeometry(2, 2, 200, 200);
 
-      const vertexShader = \`
+      const vertexShader = `
         varying vec2 vUv;
         void main() {
           vUv = uv;
           gl_Position = vec4(position, 1.0);
         }
-      \`;
+      `;
 
-      const fragmentShader = \`
+      const fragmentShader = `
         precision mediump float;
         varying vec2 vUv;
         uniform float uTime;
@@ -56,7 +58,7 @@
         }
 
         void main() {
-          float interval = 15.0;
+          float interval = 10.0;
           float segment = floor(uTime / interval);
           float timeInSegment = mod(uTime, interval);
           float burstTrigger = step(0.7, rand(segment));
@@ -66,13 +68,12 @@
           float rampOut = 1.0 - smoothstep(6.0, 7.0, timeInSegment);
           float burstWindow = burstTrigger * inZone * min(rampIn, rampOut);
 
-          float amp = mix(0.3, 1.1, burstWindow);
-          float waveTimeFactor = mix(1.0, 1.1, smoothstep(0.4, 1.2, amp));
+          float amp = mix(0.4, 1.2, burstWindow);
+          float waveTimeFactor = mix(1.0, 1.5, smoothstep(0.4, 1.2, amp));
           float freqScale = mix(1.0, 0.5, smoothstep(0.4, 1.2, amp));
 
           float baseTimeScale = 0.3;
           float slowedTime = uTime * baseTimeScale;
-
           float y = wave(vUv.y, slowedTime * waveTimeFactor, amp, freqScale);
 
           float center = 0.5;
@@ -87,7 +88,7 @@
 
           gl_FragColor = vec4(color, 1.0);
         }
-      \`;
+      `;
 
       const material = new THREE.ShaderMaterial({
         vertexShader,
