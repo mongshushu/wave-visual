@@ -1,125 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Wave Visual – Aspect Responsive</title>
-    <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background: black;
-        height: 100%;
-        width: 100%;
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wave Visual – Aspect Responsive</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: black;
+      height: 100%;
+      width: 100%;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+  <script>
+    const scene = new THREE.Scene();
+    const camera = new THREE.OrthographicCamera();
+    camera.position.z = 1;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    document.body.appendChild(renderer.domElement);
+
+    function updateCameraSize() {
+      const aspect = window.innerWidth / window.innerHeight;
+      const zoom = 1.0;
+      camera.left = -aspect * zoom;
+      camera.right = aspect * zoom;
+      camera.top = zoom;
+      camera.bottom = -zoom;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    window.addEventListener('resize', updateCameraSize);
+    updateCameraSize();
+
+    const geometry = new THREE.PlaneGeometry(2, 2, 200, 200);
+
+    const vertexShader = `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position, 1.0);
       }
-      canvas {
-        display: block;
-      }
-    </style>
-  </head>
-  <body>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
-    <script>
-      const scene = new THREE.Scene();
-      const camera = new THREE.OrthographicCamera();
-      camera.position.z = 1;
+    `;
 
-      const renderer = new THREE.WebGLRenderer({ antialias: true });
-      document.body.appendChild(renderer.domElement);
+    const fragmentShader = `
+      precision mediump float;
+      varying vec2 vUv;
+      uniform float uTime;
 
-      function updateCameraSize() {
-        const aspect = window.innerWidth / window.innerHeight;
-        const zoom = 1.0;
-        camera.left = -aspect * zoom;
-        camera.right = aspect * zoom;
-        camera.top = zoom;
-        camera.bottom = -zoom;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      }
-
-      window.addEventListener('resize', updateCameraSize);
-      updateCameraSize();
-
-      const geometry = new THREE.PlaneGeometry(2, 2, 200, 200);
-
-      const vertexShader = \`
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = vec4(position, 1.0);
-        }
-      \`;
-
-      const fragmentShader = \`
-        precision mediump float;
-        varying vec2 vUv;
-        uniform float uTime;
-
-        float rand(float x) {
-          return fract(sin(x * 13.37) * 43758.5453123);
-        }
-
-        float wave(float y, float t, float amp, float freqScale) {
-          float baseFreq = 13.0 * freqScale;
-          return amp * (
-            0.2 * sin(y * baseFreq + t * 0.8) +
-            0.1 * sin(y * baseFreq * 1.6 - t * 1.5)
-          );
-        }
-
-        void main() {
-          float interval = 15.0;
-          float segment = floor(uTime / interval);
-          float timeInSegment = mod(uTime, interval);
-          float burstTrigger = step(0.7, rand(segment));
-
-          float inZone = step(3.0, timeInSegment) * (1.0 - step(7.0, timeInSegment));
-          float rampIn = smoothstep(3.0, 4.0, timeInSegment);
-          float rampOut = 1.0 - smoothstep(6.0, 7.0, timeInSegment);
-          float burstWindow = burstTrigger * inZone * min(rampIn, rampOut);
-
-          float amp = mix(0.2, 1.0, burstWindow);
-          float waveTimeFactor = mix(1.0, 1.1, smoothstep(0.4, 1.2, amp));
-          float freqScale = mix(1.0, 0.5, smoothstep(0.4, 1.2, amp));
-
-          float baseTimeScale = 0.3;
-          float slowedTime = uTime * baseTimeScale;
-          float y = wave(vUv.y, slowedTime * waveTimeFactor, amp, freqScale);
-
-          float center = 0.5;
-          float diff = vUv.x - center - y;
-
-          float localSoftness = mix(0.01, 0.6, smoothstep(0.0, 0.5, abs(y)));
-          float blend = smoothstep(-localSoftness, localSoftness, diff);
-
-          vec3 green = vec3(0.6, 1.0, 0.6);
-          vec3 red = vec3(1.0, 0.4, 0.4);
-          vec3 color = mix(green, red, blend);
-
-          gl_FragColor = vec4(color, 1.0);
-        }
-      \`;
-
-      const material = new THREE.ShaderMaterial({
-        vertexShader,
-        fragmentShader,
-        uniforms: {
-          uTime: { value: 0.0 },
-        },
-      });
-
-      const plane = new THREE.Mesh(geometry, material);
-      scene.add(plane);
-
-      function animate(time) {
-        requestAnimationFrame(animate);
-        material.uniforms.uTime.value = time * 0.001;
-        renderer.render(scene, camera);
+      float rand(float x) {
+        return fract(sin(x * 13.37) * 43758.5453123);
       }
 
-      animate();
-    </script>
-  </body>
+      float wave(float y, float t, float amp, float freqScale) {
+        float baseFreq = 13.0 * freqScale;
+        return amp * (
+          0.2 * sin(y * baseFreq + t * 0.8) +
+          0.1 * sin(y * baseFreq * 1.6 - t * 1.5)
+        );
+      }
+
+      void main() {
+        float interval = 15.0;
+        float segment = floor(uTime / interval);
+        float timeInSegment = mod(uTime, interval);
+        float burstTrigger = step(0.7, rand(segment));
+
+        float inZone = step(3.0, timeInSegment) * (1.0 - step(7.0, timeInSegment));
+        float rampIn = smoothstep(3.0, 4.0, timeInSegment);
+        float rampOut = 1.0 - smoothstep(6.0, 7.0, timeInSegment);
+        float burstWindow = burstTrigger * inZone * min(rampIn, rampOut);
+
+        float amp = mix(0.2, 1.0, burstWindow);
+        float waveTimeFactor = mix(1.0, 1.1, smoothstep(0.4, 1.2, amp));
+        float freqScale = mix(1.0, 0.5, smoothstep(0.4, 1.2, amp));
+
+        float baseTimeScale = 0.3;
+        float slowedTime = uTime * baseTimeScale;
+        float y = wave(vUv.y, slowedTime * waveTimeFactor, amp, freqScale);
+
+        float center = 0.5;
+        float diff = vUv.x - center - y;
+
+        float localSoftness = mix(0.01, 0.6, smoothstep(0.0, 0.5, abs(y)));
+        float blend = smoothstep(-localSoftness, localSoftness, diff);
+
+        vec3 green = vec3(0.6, 1.0, 0.6);
+        vec3 red = vec3(1.0, 0.4, 0.4);
+        vec3 color = mix(green, red, blend);
+
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `;
+
+    const material = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms: {
+        uTime: { value: 0.0 },
+      },
+    });
+
+    const plane = new THREE.Mesh(geometry, material);
+    scene.add(plane);
+
+    function animate(time) {
+      requestAnimationFrame(animate);
+      material.uniforms.uTime.value = time * 0.001;
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
 </html>
