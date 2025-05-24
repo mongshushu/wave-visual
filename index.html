@@ -3,12 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Wave Event – 2420×1668</title>
+    <title>Responsive Wave Visual</title>
     <style>
-      body {
+      html, body {
         margin: 0;
+        padding: 0;
         overflow: hidden;
         background: black;
+        height: 100%;
+        width: 100%;
       }
       canvas {
         display: block;
@@ -18,16 +21,21 @@
   <body>
     <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
     <script>
-      const WIDTH = 2420;
-      const HEIGHT = 1668;
-
       const scene = new THREE.Scene();
       const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
       camera.position.z = 1;
 
       const renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(WIDTH, HEIGHT);
       document.body.appendChild(renderer.domElement);
+
+      function resizeRenderer() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        renderer.setSize(width, height);
+      }
+
+      window.addEventListener('resize', resizeRenderer);
+      resizeRenderer();
 
       const geometry = new THREE.PlaneGeometry(2, 2, 200, 200);
 
@@ -93,11 +101,11 @@
         vertexShader,
         fragmentShader,
         uniforms: {
-          uTime: { value: 0.0 },
-        },
+          uTime: { value: 0.0 }
+        }
       });
 
-      const plane = new THREE.Mesh(geometry, material);
+      const plane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
       scene.add(plane);
 
       function animate(time) {
@@ -111,8 +119,3 @@
   </body>
 </html>
 
-
-      animate();
-    </script>
-  </body>
-</html>
